@@ -1,0 +1,13 @@
+[Unit]
+Description=Statsd Exporter
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=root
+Group=root
+Type=simple
+ExecStart=/usr/local/bin/statsd_exporter --statsd.mapping-config /etc/statsd_exporter/statsd.conf
+
+[Install]
+WantedBy=multi-user.target
