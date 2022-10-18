@@ -8,7 +8,7 @@ Red='\033[1;91m'
 
 echo "Installing Netdata"
 
-curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --no-updates --stable-channel --disable-telemetry
+curl https://my-netdata.io/kickstart.sh > /tmp/netdata-kickstart.sh && sh /tmp/netdata-kickstart.sh --no-updates --stable-channel --disable-telemetry --non-interactive --disable-cloud --static-only
 
 echo "Installing Mysql Exporter"
 
@@ -58,6 +58,8 @@ sudo curl -o /etc/systemd/system/exporter_exporter.service https://raw.githubuse
 
 sudo curl -o /etc/systemd/system/statsd_exporter.service https://raw.githubusercontent.com/athul/monitoring-confs/main/statsd_exporter.service
 
+rm -rf mysqld_exporter* statsd_exporter* exporter_exporter*
+
 echo -e "${Purple}You'll need to configure Gunicorn for Statsd, Mysql config for Mysqld exporter and Nginx${NC}"
 echo -e "\n\n${Red}----Supervisor----${NC}\n\n"
 echo -e "${Green}Add :${Yellow} --statsd-host=localhost:9125 --statsd-prefix=\"frappe-bench-web\"${NC} ${Green}to supervisord.conf file for Gunicorn \nrestart supervisor with${NC} ${Yellow}sudo supervisorctl reload${NC}"
@@ -65,7 +67,7 @@ echo -e "\n\n${Red}----Nginx----${NC}\n\n"
 echo -e "${Purple}Add the following to the start of the Nginx(/etc/nginx/conf.d/frappe-bench.conf) Config${NC}\n"
 echo -e "${Yellow} upstream monitor {\n\tserver 127.0.0.1:9999;\n\tkeepalive 64;\n}${NC}\n\n"
 echo -e "${Green}Add the following before the${NC} ${Purple}@webserver location${NC}\n\n"
-echo -e "${Yellow}location ~ /mon/(?<ndpath>.*) {\n\tauth_basic \"Restricted Content\";\n\tauth_basic_user_file /etc/nginx/.htpasswd;\n\tproxy_redirect $host /mon/;\n\tproxy_set_header Host $host;\n\tproxy_set_header X-Forwarded-Host $host;\n\tproxy_set_header X-Forwarded-Server $host;\n\tproxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\tproxy_http_version 1.1;\n\tproxy_pass_request_headers on;\n\tproxy_set_header Connection \"keep-alive\";\n\tproxy_store off;\n\tproxy_pass http://monitor/mon/$ndpath$is_args$args;\n\t}${NC}"
+echo -e "${Yellow}location ~ /mon/(?<ndpath>.*) {\n\tauth_basic \"Restricted Content\";\n\tauth_basic_user_file /etc/nginx/.htpasswd;\n\tproxy_redirect \$host /mon/;\n\tproxy_set_header Host \$host;\n\tproxy_set_header X-Forwarded-Host \$host;\n\tproxy_set_header X-Forwarded-Server \$host;\n\tproxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;\n\tproxy_http_version 1.1;\n\tproxy_pass_request_headers on;\n\tproxy_set_header Connection \"keep-alive\";\n\tproxy_store off;\n\tproxy_pass http://monitor/mon/\$ndpath\$is_args\$args;\n\t}${NC}"
 echo -e "\n${Green} Restart Nginx${NC}"
 echo -e "\n\n${Red}----Systemctl----${NC}\n\n"
 echo -e "${Yellow}sudo systemctl enable/start {service_name}${NC}\n"
